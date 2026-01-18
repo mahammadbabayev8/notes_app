@@ -5,7 +5,6 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { NoteCard } from './NoteCard';
 import { EmptyState } from './EmptyState';
-import { mockNotes, mockFolders } from '../data/mockData';
 import { Note, ViewMode } from '../types';
 import {
   DropdownMenu,
@@ -15,37 +14,41 @@ import {
 } from './ui/dropdown-menu';
 
 interface NotesListScreenProps {
+  notes: Note[]; // Real notes from App state
   onCreateNote: () => void;
   onSelectNote: (note: Note) => void;
   onSearch: (query: string) => void;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  folders?: { id: string; name: string; color?: string; noteCount?: number }[]; // optional folders
 }
 
 export function NotesListScreen({
+  notes,
   onCreateNote,
   onSelectNote,
   onSearch,
   viewMode,
   onViewModeChange,
+  folders = [],
 }: NotesListScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFolder, setSelectedFolder] = useState('all');
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    if (value.trim()) {
-      onSearch(value);
-    }
+    onSearch(value);
   };
 
-  const filteredNotes = mockNotes.filter((note) => {
+  const filteredNotes = notes.filter((note) => {
     const matchesSearch = searchQuery
       ? note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.content.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
+
     const matchesFolder =
       selectedFolder === 'all' ? true : note.folderId === selectedFolder;
+
     return matchesSearch && matchesFolder;
   });
 
@@ -58,7 +61,7 @@ export function NotesListScreen({
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-slate-900 dark:text-slate-100 mb-4">My Notes</h1>
-          
+
           {/* Search Bar */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -75,25 +78,30 @@ export function NotesListScreen({
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Filter className="w-4 h-4" />
-                    {mockFolders.find((f) => f.id === selectedFolder)?.name || 'All Notes'}
-                  </Button>
-                </DropdownMenuTrigger>
+             
                 <DropdownMenuContent>
-                  {mockFolders.map((folder) => (
+                  <DropdownMenuItem onClick={() => setSelectedFolder('all')}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-gray-400" />
+                      All Notes
+                    </div>
+                  </DropdownMenuItem>
+                  {folders.map((folder) => (
                     <DropdownMenuItem
                       key={folder.id}
                       onClick={() => setSelectedFolder(folder.id)}
                     >
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: folder.color }}
-                        />
+                        {folder.color && (
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: folder.color }}
+                          />
+                        )}
                         {folder.name}
-                        <Badge variant="secondary">{folder.noteCount}</Badge>
+                        {folder.noteCount !== undefined && (
+                          <Badge variant="secondary">{folder.noteCount}</Badge>
+                        )}
                       </div>
                     </DropdownMenuItem>
                   ))}
@@ -127,7 +135,12 @@ export function NotesListScreen({
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-4">
           {filteredNotes.length === 0 ? (
-            <EmptyState type={searchQuery ? 'search' : 'notes'} onAction={onCreateNote} />
+            <div className="flex-1 flex items-center justify-center">
+              <EmptyState
+                type={searchQuery ? 'search' : 'notes'}
+                onAction={onCreateNote}
+              />
+            </div>
           ) : (
             <>
               {/* Pinned Notes */}
@@ -155,7 +168,7 @@ export function NotesListScreen({
                 </div>
               )}
 
-              {/* All Notes */}
+              {/* Unpinned Notes */}
               {unpinnedNotes.length > 0 && (
                 <div>
                   <h2 className="text-slate-700 dark:text-slate-300 mb-3">

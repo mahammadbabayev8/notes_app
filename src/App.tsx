@@ -13,33 +13,60 @@ import { Note, Screen, ViewMode } from './types';
 import { Sheet, SheetContent, SheetTrigger } from './components/ui/sheet';
 
 export default function App() {
+  // ---------------- STATE ----------------
+
+  const [notes, setNotes] = useState<Note[]>(() => {
+    const saved = localStorage.getItem('notes_app_data');
+    if (saved) {
+      try {
+        return JSON.parse(saved).map((n: any) => ({
+          ...n,
+          createdAt: new Date(n.createdAt),
+          updatedAt: new Date(n.updatedAt),
+        }));
+      } catch {
+        return mockNotes;
+      }
+    }
+    return mockNotes;
+  });
+
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Apply theme
+  const selectedNote = notes.find(n => n.id === selectedNoteId) ?? null;
+  const editingNote = notes.find(n => n.id === editingNoteId) ?? null;
+
+  // ---------------- EFFECTS ----------------
+
   useEffect(() => {
-    const root = window.document.documentElement;
+    localStorage.setItem('notes_app_data', JSON.stringify(notes));
+  }, [notes]);
+
+  useEffect(() => {
+    const root = document.documentElement;
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      root.classList.add(systemTheme);
+      root.classList.add(
+        window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      );
     } else {
       root.classList.add(theme);
     }
   }, [theme]);
 
+  // ---------------- CRUD ----------------
+
   const handleCreateNote = () => {
     const newNote: Note = {
       id: Date.now().toString(),
-      title: 'Untitled Note',
+      title: '',
       content: '',
       isPinned: false,
       folderId: null,
@@ -47,62 +74,81 @@ export default function App() {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    setEditingNote(newNote);
+
+    setNotes(prev => [newNote, ...prev]);
+    setEditingNoteId(newNote.id);
     setCurrentScreen('editor');
   };
 
+  const handleSaveNote = (data: Partial<Note>) => {
+    if (!editingNoteId) return;
+
+    setNotes(prev =>
+      prev.map(n =>
+        n.id === editingNoteId
+          ? { ...n, ...data, updatedAt: new Date() }
+          : n
+      )
+    );
+
+    setSelectedNoteId(editingNoteId);
+    setEditingNoteId(null);
+    setCurrentScreen('preview');
+  };
+
+  const handleDeleteNote = () => {
+    if (!selectedNoteId) return;
+
+    setNotes(prev => prev.filter(n => n.id !== selectedNoteId));
+    setSelectedNoteId(null);
+    setCurrentScreen('home');
+  };
+
+  // ---------------- NAVIGATION ----------------
+
   const handleSelectNote = (note: Note) => {
-    setSelectedNote(note);
+    setSelectedNoteId(note.id);
     setCurrentScreen('preview');
   };
 
   const handleEditNote = () => {
-    setEditingNote(selectedNote);
+    if (!selectedNoteId) return;
+    setEditingNoteId(selectedNoteId);
     setCurrentScreen('editor');
-  };
-
-  const handleDeleteNote = () => {
-    setSelectedNote(null);
-    setCurrentScreen('home');
-  };
-
-  const handleSaveNote = (noteData: Partial<Note>) => {
-    // In a real app, this would save to a database
-    console.log('Saving note:', noteData);
   };
 
   const handleBackToHome = () => {
     setCurrentScreen('home');
-    setSelectedNote(null);
-    setEditingNote(null);
+    setSelectedNoteId(null);
+    setEditingNoteId(null);
     setSearchQuery('');
   };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentScreen('search');
   };
-
-  const navigationItems = [
-    { id: 'home' as Screen, label: 'All Notes', icon: FileText },
-    { id: 'folders' as Screen, label: 'Folders', icon: FolderOpen },
-    { id: 'settings' as Screen, label: 'Settings', icon: SettingsIcon },
-  ];
 
   const handleNavigate = (screen: Screen) => {
     setCurrentScreen(screen);
     setSidebarOpen(false);
   };
 
+  const navigationItems = [
+    { id: 'home' as Screen, label: 'All Notes', icon: FileText },
+    // { id: 'folders' as Screen, label: 'Folders', icon: FolderOpen },
+    { id: 'settings' as Screen, label: 'Settings', icon: SettingsIcon },
+  ];
+
+  // ---------------- UI ----------------
+
   const Sidebar = () => (
     <nav className="p-4 space-y-2">
       <div className="mb-6">
-        <h2 className="text-slate-900 dark:text-slate-100 px-3 mb-2">Notes App</h2>
-        <p className="text-slate-500 dark:text-slate-400 px-3">
-          {mockNotes.length} notes
-        </p>
+        <h2 className="font-bold px-3">Notes App</h2>
+        <p className="text-sm px-3 text-slate-500">{notes.length} notes</p>
       </div>
-      {navigationItems.map((item) => {
+
+      {navigationItems.map(item => {
         const Icon = item.icon;
         return (
           <Button
@@ -119,35 +165,72 @@ export default function App() {
     </nav>
   );
 
+
+
+
+  const handleTogglePin = () => {
+    if (!selectedNote) return;
+
+    setNotes(prev =>
+      prev.map(n =>
+        n.id === selectedNote.id
+          ? { ...n, isPinned: !n.isPinned, updatedAt: new Date() }
+          : n
+      )
+    );
+
+    setSelectedNote(prev =>
+      prev ? { ...prev, isPinned: !prev.isPinned } : prev
+    );
+  };
+
+  const handleDuplicate = () => {
+    if (!selectedNote) return;
+
+    const duplicated: Note = {
+      ...selectedNote,
+      id: Date.now().toString(),
+      title: `${selectedNote.title} (copy)`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    setNotes(prev => [duplicated, ...prev]);
+  };
+
   return (
     <div className="h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col w-64 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <aside className="hidden md:flex w-64 border-r bg-white dark:bg-slate-800">
         <Sidebar />
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4">
-        <div className="flex items-center justify-between">
-          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
-          <h2 className="text-slate-900 dark:text-slate-100">Notes App</h2>
-          <div className="w-10" /> {/* Spacer for centering */}
-        </div>
+      <div className="md:hidden fixed top-0 inset-x-0 z-40 bg-white dark:bg-slate-800 p-4">
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Menu className="w-5 h-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
       </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-hidden md:mt-0 mt-16">
+      {/* Main */}
+      <main className="flex-1 overflow-hidden mt-16 md:mt-0">
         {currentScreen === 'home' && (
           <NotesListScreen
+            notes={
+              searchQuery
+                ? notes.filter(n =>
+                  n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  n.content.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                : notes
+            }
             onCreateNote={handleCreateNote}
             onSelectNote={handleSelectNote}
             onSearch={handleSearch}
@@ -155,22 +238,31 @@ export default function App() {
             onViewModeChange={setViewMode}
           />
         )}
-        {currentScreen === 'editor' && (
+
+
+        {currentScreen === 'editor' && editingNote && (
           <NoteEditor
             note={editingNote}
             onBack={handleBackToHome}
             onSave={handleSaveNote}
           />
         )}
-        {currentScreen === 'folders' && <FoldersScreen onBack={handleBackToHome} />}
+
         {currentScreen === 'preview' && selectedNote && (
           <NotePreview
             note={selectedNote}
             onBack={handleBackToHome}
             onEdit={handleEditNote}
             onDelete={handleDeleteNote}
+            onTogglePin={handleTogglePin}
+            onDuplicate={handleDuplicate}
           />
         )}
+
+        {currentScreen === 'folders' && (
+          <FoldersScreen notes={notes} onBack={handleBackToHome} />
+        )}
+
         {currentScreen === 'settings' && (
           <SettingsScreen
             onBack={handleBackToHome}
@@ -178,8 +270,10 @@ export default function App() {
             onThemeChange={setTheme}
           />
         )}
+
         {currentScreen === 'search' && (
           <SearchResults
+            notes={notes}
             query={searchQuery}
             onBack={handleBackToHome}
             onSelectNote={handleSelectNote}
@@ -187,7 +281,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Toast Notifications */}
       <Toaster />
     </div>
   );

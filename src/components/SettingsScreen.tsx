@@ -98,147 +98,19 @@ export function SettingsScreen({ onBack, theme, onThemeChange }: SettingsScreenP
 
               <Separator />
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="font-size">Font Size</Label>
-                <Select defaultValue="medium" onValueChange={handleFontSizeChange}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="small">Small</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="large">Large</SelectItem>
-                    <SelectItem value="extra-large">Extra Large</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="font-style">Font Style</Label>
-                <Select defaultValue="system" onValueChange={handleFontStyleChange}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system">System Default</SelectItem>
-                    <SelectItem value="serif">Serif</SelectItem>
-                    <SelectItem value="sans-serif">Sans Serif</SelectItem>
-                    <SelectItem value="monospace">Monospace</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            
             </div>
           </div>
 
-          {/* Sync Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
-                <Cloud className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <h2 className="text-slate-900 dark:text-slate-100">Sync & Backup</h2>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Keep your notes in sync across devices
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="cloud-sync">Cloud Sync</Label>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    Sync notes with cloud storage
-                  </p>
-                </div>
-                <Switch id="cloud-sync" onCheckedChange={handleSyncToggle} />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="sync-provider">Sync Provider</Label>
-                <Select defaultValue="google-drive">
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="google-drive">Google Drive</SelectItem>
-                    <SelectItem value="icloud">iCloud</SelectItem>
-                    <SelectItem value="dropbox">Dropbox</SelectItem>
-                    <SelectItem value="local">Local Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="auto-backup">Automatic Backup</Label>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    Backup notes automatically
-                  </p>
-                </div>
-                <Switch id="auto-backup" defaultChecked />
-              </div>
-            </div>
-          </div>
-
-          {/* Security Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-950 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <h2 className="text-slate-900 dark:text-slate-100">Security</h2>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Protect your notes with additional security
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="pin-lock">PIN Lock</Label>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    Require PIN to open app
-                  </p>
-                </div>
-                <Switch id="pin-lock" />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="biometric">Biometric Authentication</Label>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    Use fingerprint or face ID
-                  </p>
-                </div>
-                <Switch id="biometric" onCheckedChange={handleBiometricToggle} />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="lock-notes">Lock Individual Notes</Label>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    Protect sensitive notes
-                  </p>
-                </div>
-                <Switch id="lock-notes" />
-              </div>
-            </div>
-          </div>
+  
 
           {/* About Section */}
           <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
             <h2 className="text-slate-900 dark:text-slate-100 mb-4">About</h2>
             <div className="space-y-2 text-slate-600 dark:text-slate-400">
               <p>Version 1.0.0</p>
-              <p>© 2025 Notes App. All rights reserved.</p>
+              <p>© 2026 Notes App. All rights reserved.</p>
             </div>
           </div>
         </div>
